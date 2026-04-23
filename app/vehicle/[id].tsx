@@ -1,50 +1,93 @@
 /**
  * Vehicle Detail View — Map-centric real-time tracking screen.
- * Shows a full-screen map with the vehicle's position and an info overlay.
+ * Uses Leaflet + OpenStreetMap via WebView for cross-platform maps (no API key needed).
  */
 
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useMemo, useRef } from 'react';
 import {
   ActivityIndicator,
-  Platform,
   StyleSheet,
   Text,
   View,
   useColorScheme,
 } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
-import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
+import { WebView } from 'react-native-webview';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useVehicleDetail } from '@/hooks/use-vehicle-detail';
 import { LoadingSpinner } from '@/components/loading-spinner';
 import { ErrorState } from '@/components/error-state';
 import { Brand, Colors, FontSize, FontWeight, Radius, Shadows, Spacing } from '@/constants/theme';
-import { getStatusLabel } from '@/services/mbta-adapter';
+
+function buildLeafletHtml(lat: number, lng: number, label: string, status: string): string {
+  return `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <style>
+    * { margin: 0; padding: 0; }
+    html, body, #map { width: 100%; height: 100%; }
+  </style>
+</head>
+<body>
+  <div id="map"></div>
+  <script>
+    var map = L.map('map', { zoomControl: false }).setView([${lat}, ${lng}], 16);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© OpenStreetMap',
+      maxZoom: 19,
+    }).addTo(map);
+
+    L.control.zoom({ position: 'topright' }).addTo(map);
+
+    var vehicleIcon = L.divIcon({
+      className: 'vehicle-marker',
+      html: '<div style="width:32px;height:32px;border-radius:50%;background:${Brand.primary};border:3px solid white;box-shadow:0 2px 8px rgba(0,0,0,0.3);display:flex;align-items:center;justify-content:center;"><div style="width:10px;height:10px;border-radius:50%;background:white;"></div></div>',
+      iconSize: [32, 32],
+      iconAnchor: [16, 16],
+    });
+
+    var marker = L.marker([${lat}, ${lng}], { icon: vehicleIcon }).addTo(map);
+    marker.bindPopup('<b>#${label}</b><br>${status}');
+
+    window.updatePosition = function(lat, lng, label, status) {
+      marker.setLatLng([lat, lng]);
+      marker.setPopupContent('<b>#' + label + '</b><br>' + status);
+      map.panTo([lat, lng], { animate: true, duration: 0.5 });
+    };
+  </script>
+</body>
+</html>`;
+}
 
 export default function VehicleDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const colorScheme = useColorScheme() ?? 'light';
   const colors = Colors[colorScheme];
   const insets = useSafeAreaInsets();
-  const mapRef = useRef<MapView>(null);
+  const webViewRef = useRef<WebView>(null);
 
   const { data: vehicle, isLoading, isFetching, error, refetch } = useVehicleDetail(id);
 
-  // Animate camera to vehicle position on updates
+  // Update marker position when vehicle data changes
   useEffect(() => {
-    if (vehicle && mapRef.current) {
-      mapRef.current.animateToRegion(
-        {
-          latitude: vehicle.latitude,
-          longitude: vehicle.longitude,
-          latitudeDelta: 0.005,
-          longitudeDelta: 0.005,
-        },
-        500
+    if (vehicle && webViewRef.current) {
+      const escaped = vehicle.statusText.replace(/'/g, "\\'");
+      webViewRef.current.injectJavaScript(
+        `if(window.updatePosition) window.updatePosition(${vehicle.latitude}, ${vehicle.longitude}, '${vehicle.label}', '${escaped}'); true;`
       );
     }
-  }, [vehicle?.latitude, vehicle?.longitude]);
+  }, [vehicle?.latitude, vehicle?.longitude, vehicle?.statusText]);
+
+  const leafletHtml = useMemo(() => {
+    if (!vehicle) return '';
+    return buildLeafletHtml(vehicle.latitude, vehicle.longitude, vehicle.label, vehicle.statusText);
+  }, [vehicle?.id]); // Only rebuild HTML on initial load, updates via injectJavaScript
 
   if (isLoading) {
     return <LoadingSpinner fullScreen />;
@@ -67,30 +110,18 @@ export default function VehicleDetailScreen() {
 
   return (
     <View style={[styles.screen, { backgroundColor: colors.background }]}>
-      {/* Map */}
-      <MapView
-        ref={mapRef}
+      {/* Leaflet Map */}
+      <WebView
+        ref={webViewRef}
         style={styles.map}
-        provider={Platform.OS === 'android' ? PROVIDER_GOOGLE : undefined}
-        initialRegion={{
-          latitude: vehicle.latitude,
-          longitude: vehicle.longitude,
-          latitudeDelta: 0.005,
-          longitudeDelta: 0.005,
-        }}
-        showsUserLocation
-        showsMyLocationButton
-      >
-        <Marker
-          coordinate={{
-            latitude: vehicle.latitude,
-            longitude: vehicle.longitude,
-          }}
-          title={`Vehicle #${vehicle.label}`}
-          description={vehicle.statusText}
-          pinColor={Brand.primary}
-        />
-      </MapView>
+        source={{ html: leafletHtml }}
+        originWhitelist={['*']}
+        javaScriptEnabled
+        domStorageEnabled
+        scrollEnabled={false}
+        showsHorizontalScrollIndicator={false}
+        showsVerticalScrollIndicator={false}
+      />
 
       {/* Fetching indicator */}
       {isFetching && (
@@ -163,7 +194,7 @@ const styles = StyleSheet.create({
   fetchingBadge: {
     position: 'absolute',
     top: Spacing.lg,
-    right: Spacing.lg,
+    left: Spacing.lg,
     backgroundColor: 'rgba(255,255,255,0.9)',
     borderRadius: Radius.full,
     padding: Spacing.sm,

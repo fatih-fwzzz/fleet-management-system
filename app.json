@@ -24,12 +24,7 @@
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
-      "package": "com.fatih_fawwaz07.fleetmanagementsystem",
-      "config": {
-        "googleMaps": {
-          "apiKey": "YOUR_GOOGLE_MAPS_API_KEY"
-        }
-      }
+      "package": "com.fatih_fawwaz07.fleetmanagementsystem"
     },
     "web": {
       "output": "static",
