@@ -1,98 +1,289 @@
-import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
+import { useInfiniteQuery } from "@tanstack/react-query";
+import { useRouter } from "expo-router";
+import { useMemo } from "react";
+import {
+  ActivityIndicator,
+  FlatList,
+  RefreshControl,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
 
-import { HelloWave } from '@/components/hello-wave';
-import ParallaxScrollView from '@/components/parallax-scroll-view';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { Link } from 'expo-router';
+import { VehicleCard } from "@/components/dashboard/vehicle-card";
+import { BRAND_COLOR } from "@/constants/brand";
+import { getVehicles } from "@/lib/api/mbta-queries";
+import { useFilterStore } from "@/lib/store/filter-store";
 
-export default function HomeScreen() {
-  return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
+export default function DashboardScreen() {
+  const router = useRouter();
+  const selectedRouteIds = useFilterStore((state) => state.selectedRouteIds);
+  const selectedTripIds = useFilterStore((state) => state.selectedTripIds);
+
+  const {
+    data,
+    isLoading,
+    isRefetching,
+    isFetchingNextPage,
+    fetchNextPage,
+    hasNextPage,
+    refetch,
+    error,
+  } = useInfiniteQuery({
+    queryKey: ["vehicles", selectedRouteIds, selectedTripIds],
+    queryFn: ({ pageParam }) =>
+      getVehicles({
+        offset: pageParam,
+        routeIds: selectedRouteIds,
+        tripIds: selectedTripIds,
+      }),
+    initialPageParam: 0,
+    getNextPageParam: (lastPage) => lastPage.nextOffset,
+    staleTime: 15000,
+    refetchInterval: 20000,
+  });
+
+  const vehicles = useMemo(
+    () => data?.pages.flatMap((page) => page.items) ?? [],
+    [data?.pages],
+  );
+
+  // #region agent log
+  fetch("http://127.0.0.1:7355/ingest/a4bc901a-ff44-4c2a-91d8-3686aeb79153", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "X-Debug-Session-Id": "8cafb7",
+    },
+    body: JSON.stringify({
+      sessionId: "8cafb7",
+      runId: "pre-fix",
+      hypothesisId: "H2",
+      location: "app/(tabs)/index.tsx:DashboardScreen",
+      message: "Dashboard render state",
+      data: {
+        isLoading,
+        isRefetching,
+        hasNextPage: Boolean(hasNextPage),
+        vehiclesCount: vehicles.length,
+        hasError: Boolean(error),
+      },
+      timestamp: Date.now(),
+    }),
+  }).catch(() => {});
+  // #endregion
+
+  if (isLoading) {
+    return (
+      <View style={styles.skeletonContainer}>
+        <Text style={styles.title}>Commuter Dashboard</Text>
+        <Text style={styles.subtitle}>Loading live vehicles...</Text>
+        {Array.from({ length: 3 }).map((_, index) => (
+          <View key={index} style={styles.skeletonCard}>
+            <View style={styles.skeletonLineLg} />
+            <View style={styles.skeletonLineMd} />
+            <View style={styles.skeletonLineSm} />
+          </View>
+        ))}
+        <ActivityIndicator
+          size="large"
+          color={BRAND_COLOR}
+          style={styles.skeletonSpinner}
         />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12',
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <Link href="/modal">
-          <Link.Trigger>
-            <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-          </Link.Trigger>
-          <Link.Preview />
-          <Link.Menu>
-            <Link.MenuAction title="Action" icon="cube" onPress={() => alert('Action pressed')} />
-            <Link.MenuAction
-              title="Share"
-              icon="square.and.arrow.up"
-              onPress={() => alert('Share pressed')}
-            />
-            <Link.Menu title="More" icon="ellipsis">
-              <Link.MenuAction
-                title="Delete"
-                icon="trash"
-                destructive
-                onPress={() => alert('Delete pressed')}
-              />
-            </Link.Menu>
-          </Link.Menu>
-        </Link>
+      </View>
+    );
+  }
 
-        <ThemedText>
-          {`Tap the Explore tab to learn more about what's included in this starter app.`}
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          {`When you're ready, run `}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
+  if (error) {
+    return (
+      <View style={styles.centered}>
+        <Text style={styles.errorTitle}>MBTA Server Offline</Text>
+        <Text style={styles.errorSubtitle}>
+          We cannot load live vehicles right now. Pull to refresh and try again.
+        </Text>
+      </View>
+    );
+  }
+
+  return (
+    <FlatList
+      contentContainerStyle={styles.content}
+      data={vehicles}
+      keyExtractor={(item, index) => `${item.id}-${index}`}
+      renderItem={({ item }) => (
+        <VehicleCard
+          vehicle={item}
+          onPress={() => {
+            const params = new URLSearchParams({
+              routeName: item.routeName,
+              direction: item.tripDirection,
+              destination: item.destination,
+              latitude: String(item.latitude),
+              longitude: String(item.longitude),
+              bearing: String(item.bearing ?? 0),
+            }).toString();
+
+            // #region agent log
+            fetch(
+              "http://127.0.0.1:7355/ingest/a4bc901a-ff44-4c2a-91d8-3686aeb79153",
+              {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                  "X-Debug-Session-Id": "8cafb7",
+                },
+                body: JSON.stringify({
+                  sessionId: "8cafb7",
+                  runId: "pre-fix",
+                  hypothesisId: "H2",
+                  location: "app/(tabs)/index.tsx:onVehiclePress",
+                  message: "Navigating to vehicle detail",
+                  data: {
+                    vehicleId: item.id,
+                    latitude: item.latitude,
+                    longitude: item.longitude,
+                    routeName: item.routeName,
+                  },
+                  timestamp: Date.now(),
+                }),
+              },
+            ).catch(() => {});
+            // #endregion
+
+            router.push(`/vehicle/${item.id}?${params}` as unknown as never);
+          }}
+        />
+      )}
+      ListHeaderComponent={
+        <View style={styles.header}>
+          <Text style={styles.title}>Commuter Dashboard</Text>
+          <Text style={styles.subtitle}>
+            Real-time MBTA vehicles with active route/trip filters.
+          </Text>
+        </View>
+      }
+      ListEmptyComponent={
+        <View style={styles.emptyContainer}>
+          <Text style={styles.emptyTitle}>No Active Vehicles Found</Text>
+          <Text style={styles.emptySubtitle}>
+            Change route/trip filters in the Filters tab or refresh for updates.
+          </Text>
+        </View>
+      }
+      onEndReachedThreshold={0.3}
+      onEndReached={() => {
+        if (hasNextPage && !isFetchingNextPage) {
+          fetchNextPage();
+        }
+      }}
+      ListFooterComponent={
+        isFetchingNextPage ? (
+          <View style={styles.paginationLoader}>
+            <ActivityIndicator color={BRAND_COLOR} />
+          </View>
+        ) : null
+      }
+      refreshControl={
+        <RefreshControl
+          refreshing={isRefetching}
+          onRefresh={refetch}
+          tintColor={BRAND_COLOR}
+        />
+      }
+    />
   );
 }
 
 const styles = StyleSheet.create({
-  titleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
+  content: {
+    paddingHorizontal: 14,
+    paddingTop: 16,
+    paddingBottom: 24,
+    backgroundColor: "#F4F8FF",
+    minHeight: "100%",
   },
-  stepContainer: {
-    gap: 8,
+  skeletonContainer: {
+    flex: 1,
+    paddingHorizontal: 14,
+    paddingTop: 16,
+    backgroundColor: "#F4F8FF",
+  },
+  centered: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 20,
+    backgroundColor: "#F4F8FF",
+  },
+  header: {
+    marginBottom: 14,
+  },
+  title: {
+    fontSize: 26,
+    fontWeight: "700",
+    color: "#0D2654",
+    marginBottom: 4,
+  },
+  subtitle: {
+    color: "#4A6488",
+  },
+  errorTitle: {
+    color: "#9B1C1C",
+    fontWeight: "700",
+    marginBottom: 8,
+    fontSize: 18,
+  },
+  errorSubtitle: {
+    textAlign: "center",
+    color: "#4A6488",
+  },
+  emptyContainer: {
+    paddingVertical: 50,
+    alignItems: "center",
+  },
+  emptyTitle: {
+    color: "#0D2654",
+    fontWeight: "700",
     marginBottom: 8,
   },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
+  emptySubtitle: {
+    color: "#4A6488",
+    textAlign: "center",
+  },
+  paginationLoader: {
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 18,
+  },
+  skeletonCard: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: "#D5E2F5",
+    padding: 14,
+    marginBottom: 12,
+  },
+  skeletonLineLg: {
+    width: "55%",
+    height: 16,
+    borderRadius: 8,
+    marginBottom: 10,
+    backgroundColor: "#DCE8F7",
+  },
+  skeletonLineMd: {
+    width: "90%",
+    height: 14,
+    borderRadius: 8,
+    marginBottom: 10,
+    backgroundColor: "#E4EDF9",
+  },
+  skeletonLineSm: {
+    width: "65%",
+    height: 14,
+    borderRadius: 8,
+    backgroundColor: "#E4EDF9",
+  },
+  skeletonSpinner: {
+    marginTop: 10,
   },
 });
