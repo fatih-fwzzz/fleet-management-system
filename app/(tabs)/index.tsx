@@ -1,98 +1,186 @@
-import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
+/**
+ * Commuter Dashboard — Primary screen for vehicle list + filters.
+ * Features paginated vehicle cards, pull-to-refresh, and filter bar.
+ */
 
-import { HelloWave } from '@/components/hello-wave';
-import ParallaxScrollView from '@/components/parallax-scroll-view';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { Link } from 'expo-router';
+import React, { useCallback, useMemo } from 'react';
+import {
+  FlatList,
+  RefreshControl,
+  StyleSheet,
+  Text,
+  View,
+  useColorScheme,
+} from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-export default function HomeScreen() {
+import { VehicleCard } from '@/components/vehicle-card';
+import { VehicleCardSkeletonList } from '@/components/vehicle-card-skeleton';
+import { FilterBar } from '@/components/filter-bar';
+import { LoadingSpinner } from '@/components/loading-spinner';
+import { ErrorState } from '@/components/error-state';
+import { EmptyState } from '@/components/empty-state';
+import { useVehicles, flattenVehiclePages } from '@/hooks/use-vehicles';
+import { useFilterStore } from '@/stores/filter-store';
+import { Brand, Colors, FontSize, FontWeight, Spacing } from '@/constants/theme';
+import type { CommuterVehicle } from '@/services/types';
+
+export default function DashboardScreen() {
+  const colorScheme = useColorScheme() ?? 'light';
+  const colors = Colors[colorScheme];
+  const insets = useSafeAreaInsets();
+  const clearFilters = useFilterStore((s) => s.clearFilters);
+  const hasActiveFilters = useFilterStore((s) => s.hasActiveFilters);
+
+  const {
+    data,
+    isLoading,
+    isFetching,
+    isFetchingNextPage,
+    error,
+    refetch,
+    fetchNextPage,
+    hasNextPage,
+  } = useVehicles();
+
+  const vehicles = useMemo(() => flattenVehiclePages(data?.pages), [data?.pages]);
+
+  const handleRefresh = useCallback(() => {
+    refetch();
+  }, [refetch]);
+
+  const handleEndReached = useCallback(() => {
+    if (hasNextPage && !isFetchingNextPage) {
+      fetchNextPage();
+    }
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
+
+  const renderItem = useCallback(
+    ({ item }: { item: CommuterVehicle }) => <VehicleCard vehicle={item} />,
+    []
+  );
+
+  const keyExtractor = useCallback((item: CommuterVehicle) => item.id, []);
+
+  // Header: Title + Filter Bar
+  const ListHeader = useMemo(
+    () => (
+      <View>
+        {/* Title Bar */}
+        <View style={[styles.titleBar, { paddingTop: insets.top + Spacing.md }]}>
+          <View>
+            <Text style={[styles.title, { color: colors.text }]}>MBTA Fleet Tracker</Text>
+            <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
+              Real-time vehicle tracking
+            </Text>
+          </View>
+          {isFetching && !isLoading && (
+            <View style={[styles.syncBadge, { backgroundColor: Brand.primaryAlpha10 }]}>
+              <View style={[styles.syncDot, { backgroundColor: Brand.primary }]} />
+              <Text style={[styles.syncText, { color: Brand.primary }]}>Live</Text>
+            </View>
+          )}
+        </View>
+        {/* Filter Bar */}
+        <FilterBar />
+        {/* Vehicle count */}
+        {!isLoading && vehicles.length > 0 && (
+          <Text style={[styles.countText, { color: colors.textTertiary }]}>
+            {vehicles.length} vehicle{vehicles.length !== 1 ? 's' : ''} active
+          </Text>
+        )}
+      </View>
+    ),
+    [insets.top, colors, isFetching, isLoading, vehicles.length]
+  );
+
+  // Error state
+  if (error && !data) {
+    return (
+      <View style={[styles.screen, { backgroundColor: colors.background }]}>
+        <View style={[styles.titleBar, { paddingTop: insets.top + Spacing.md }]}>
+          <Text style={[styles.title, { color: colors.text }]}>MBTA Fleet Tracker</Text>
+        </View>
+        <ErrorState error={error as Error} onRetry={handleRefresh} />
+      </View>
+    );
+  }
+
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12',
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <Link href="/modal">
-          <Link.Trigger>
-            <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-          </Link.Trigger>
-          <Link.Preview />
-          <Link.Menu>
-            <Link.MenuAction title="Action" icon="cube" onPress={() => alert('Action pressed')} />
-            <Link.MenuAction
-              title="Share"
-              icon="square.and.arrow.up"
-              onPress={() => alert('Share pressed')}
-            />
-            <Link.Menu title="More" icon="ellipsis">
-              <Link.MenuAction
-                title="Delete"
-                icon="trash"
-                destructive
-                onPress={() => alert('Delete pressed')}
-              />
-            </Link.Menu>
-          </Link.Menu>
-        </Link>
-
-        <ThemedText>
-          {`Tap the Explore tab to learn more about what's included in this starter app.`}
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          {`When you're ready, run `}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
+    <View style={[styles.screen, { backgroundColor: colors.background }]}>
+      <FlatList
+        data={isLoading ? [] : vehicles}
+        renderItem={renderItem}
+        keyExtractor={keyExtractor}
+        ListHeaderComponent={ListHeader}
+        ListEmptyComponent={
+          isLoading ? (
+            <VehicleCardSkeletonList count={5} />
+          ) : (
+            <EmptyState hasActiveFilters={hasActiveFilters()} onClearFilters={clearFilters} />
+          )
+        }
+        ListFooterComponent={
+          isFetchingNextPage ? (
+            <LoadingSpinner size="small" style={{ paddingBottom: insets.bottom + 80 }} />
+          ) : (
+            <View style={{ height: insets.bottom + 80 }} />
+          )
+        }
+        refreshControl={
+          <RefreshControl
+            refreshing={isFetching && !isLoading && !isFetchingNextPage}
+            onRefresh={handleRefresh}
+            tintColor={Brand.primary}
+            colors={[Brand.primary]}
+          />
+        }
+        onEndReached={handleEndReached}
+        onEndReachedThreshold={0.3}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.listContent}
+        removeClippedSubviews
+        maxToRenderPerBatch={10}
+        windowSize={5}
+      />
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  titleContainer: {
+  screen: { flex: 1 },
+  titleBar: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    paddingHorizontal: Spacing.lg,
+    paddingBottom: Spacing.md,
+  },
+  title: {
+    fontSize: FontSize.xxl,
+    fontWeight: FontWeight.heavy,
+    letterSpacing: -0.5,
+  },
+  subtitle: {
+    fontSize: FontSize.sm,
+    marginTop: 2,
+  },
+  syncBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: Spacing.xs,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.xs,
+    borderRadius: 999,
+    marginTop: Spacing.sm,
   },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
+  syncDot: { width: 6, height: 6, borderRadius: 3 },
+  syncText: { fontSize: FontSize.xs, fontWeight: FontWeight.semibold },
+  countText: {
+    fontSize: FontSize.xs,
+    fontWeight: FontWeight.medium,
+    paddingHorizontal: Spacing.lg,
+    paddingBottom: Spacing.sm,
   },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
-  },
+  listContent: { flexGrow: 1 },
 });
