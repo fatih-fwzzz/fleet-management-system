@@ -1,7 +1,7 @@
-/**
- * Commuter Dashboard — Primary screen for vehicle list + filters.
- * Features paginated vehicle cards, pull-to-refresh, and filter bar.
- */
+
+
+
+
 
 import React, { useCallback, useMemo } from 'react';
 import {
@@ -10,8 +10,8 @@ import {
   StyleSheet,
   Text,
   View,
-  useColorScheme,
-} from 'react-native';
+  useColorScheme } from
+'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { VehicleCard } from '@/components/vehicle-card';
@@ -40,7 +40,7 @@ export default function DashboardScreen() {
     error,
     refetch,
     fetchNextPage,
-    hasNextPage,
+    hasNextPage
   } = useVehicles();
 
   const vehicles = useMemo(() => flattenVehiclePages(data?.pages), [data?.pages]);
@@ -56,54 +56,54 @@ export default function DashboardScreen() {
   }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
   const renderItem = useCallback(
-    ({ item }: { item: CommuterVehicle }) => <VehicleCard vehicle={item} />,
+    ({ item }: {item: CommuterVehicle;}) => <VehicleCard vehicle={item} />,
     []
   );
 
   const keyExtractor = useCallback((item: CommuterVehicle) => item.id, []);
 
-  // Header: Title + Filter Bar
+
   const ListHeader = useMemo(
-    () => (
-      <View>
-        {/* Title Bar */}
+    () =>
+    <View>
+        {}
         <View style={[styles.titleBar, { paddingTop: insets.top + Spacing.md }]}>
           <View>
-            <Text style={[styles.title, { color: colors.text }]}>MBTA Fleet Tracker</Text>
+            <Text style={[styles.title, { color: colors.text }]}>Fleet Tracker</Text>
             <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
               Real-time vehicle tracking
             </Text>
           </View>
-          {isFetching && !isLoading && (
-            <View style={[styles.syncBadge, { backgroundColor: Brand.primaryAlpha10 }]}>
+          {isFetching && !isLoading &&
+        <View style={[styles.syncBadge, { backgroundColor: Brand.primaryAlpha10 }]}>
               <View style={[styles.syncDot, { backgroundColor: Brand.primary }]} />
               <Text style={[styles.syncText, { color: Brand.primary }]}>Live</Text>
             </View>
-          )}
+        }
         </View>
-        {/* Filter Bar */}
+        {}
         <FilterBar />
-        {/* Vehicle count */}
-        {!isLoading && vehicles.length > 0 && (
-          <Text style={[styles.countText, { color: colors.textTertiary }]}>
+        {}
+        {!isLoading && vehicles.length > 0 &&
+      <Text style={[styles.countText, { color: colors.textTertiary }]}>
             {vehicles.length} vehicle{vehicles.length !== 1 ? 's' : ''} active
           </Text>
-        )}
-      </View>
-    ),
+      }
+      </View>,
+
     [insets.top, colors, isFetching, isLoading, vehicles.length]
   );
 
-  // Error state
+
   if (error && !data) {
     return (
       <View style={[styles.screen, { backgroundColor: colors.background }]}>
         <View style={[styles.titleBar, { paddingTop: insets.top + Spacing.md }]}>
-          <Text style={[styles.title, { color: colors.text }]}>MBTA Fleet Tracker</Text>
+          <Text style={[styles.title, { color: colors.text }]}>Fleet Tracker</Text>
         </View>
         <ErrorState error={error as Error} onRetry={handleRefresh} />
-      </View>
-    );
+      </View>);
+
   }
 
   return (
@@ -114,26 +114,26 @@ export default function DashboardScreen() {
         keyExtractor={keyExtractor}
         ListHeaderComponent={ListHeader}
         ListEmptyComponent={
-          isLoading ? (
-            <VehicleCardSkeletonList count={5} />
-          ) : (
-            <EmptyState hasActiveFilters={hasActiveFilters()} onClearFilters={clearFilters} />
-          )
+        isLoading ?
+        <VehicleCardSkeletonList count={5} /> :
+
+        <EmptyState hasActiveFilters={hasActiveFilters()} onClearFilters={clearFilters} />
+
         }
         ListFooterComponent={
-          isFetchingNextPage ? (
-            <LoadingSpinner size="small" style={{ paddingBottom: insets.bottom + 80 }} />
-          ) : (
-            <View style={{ height: insets.bottom + 80 }} />
-          )
+        isFetchingNextPage ?
+        <LoadingSpinner size="small" style={{ paddingBottom: insets.bottom + 80 }} /> :
+
+        <View style={{ height: insets.bottom + 80 }} />
+
         }
         refreshControl={
-          <RefreshControl
-            refreshing={isFetching && !isLoading && !isFetchingNextPage}
-            onRefresh={handleRefresh}
-            tintColor={Brand.primary}
-            colors={[Brand.primary]}
-          />
+        <RefreshControl
+          refreshing={isFetching && !isLoading && !isFetchingNextPage}
+          onRefresh={handleRefresh}
+          tintColor={Brand.primary}
+          colors={[Brand.primary]} />
+
         }
         onEndReached={handleEndReached}
         onEndReachedThreshold={0.3}
@@ -141,10 +141,10 @@ export default function DashboardScreen() {
         contentContainerStyle={styles.listContent}
         removeClippedSubviews
         maxToRenderPerBatch={10}
-        windowSize={5}
-      />
-    </View>
-  );
+        windowSize={5} />
+
+    </View>);
+
 }
 
 const styles = StyleSheet.create({
@@ -154,16 +154,16 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'flex-start',
     paddingHorizontal: Spacing.lg,
-    paddingBottom: Spacing.md,
+    paddingBottom: Spacing.md
   },
   title: {
     fontSize: FontSize.xxl,
     fontWeight: FontWeight.heavy,
-    letterSpacing: -0.5,
+    letterSpacing: -0.5
   },
   subtitle: {
     fontSize: FontSize.sm,
-    marginTop: 2,
+    marginTop: 2
   },
   syncBadge: {
     flexDirection: 'row',
@@ -172,7 +172,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.md,
     paddingVertical: Spacing.xs,
     borderRadius: 999,
-    marginTop: Spacing.sm,
+    marginTop: Spacing.sm
   },
   syncDot: { width: 6, height: 6, borderRadius: 3 },
   syncText: { fontSize: FontSize.xs, fontWeight: FontWeight.semibold },
@@ -180,7 +180,7 @@ const styles = StyleSheet.create({
     fontSize: FontSize.xs,
     fontWeight: FontWeight.medium,
     paddingHorizontal: Spacing.lg,
-    paddingBottom: Spacing.sm,
+    paddingBottom: Spacing.sm
   },
-  listContent: { flexGrow: 1 },
+  listContent: { flexGrow: 1 }
 });

@@ -1,9 +1,9 @@
-/**
- * TypeScript interfaces for the MBTA Commuter Fleet Management System.
- * These represent the transformed, commuter-friendly data models.
- */
 
-// ─── Transformed Models (Commuter-Facing) ───────────────────────────────────
+
+
+
+
+
 
 export interface CommuterVehicle {
   id: string;
@@ -51,13 +51,13 @@ export interface Trip {
   name: string;
 }
 
-// ─── Raw JSON:API Types ─────────────────────────────────────────────────────
+
 
 export interface JsonApiResponse<T = JsonApiResource> {
   data: T[];
   included?: JsonApiResource[];
   links?: JsonApiLinks;
-  jsonapi?: { version: string };
+  jsonapi?: {version: string;};
 }
 
 export interface JsonApiResource {
@@ -69,7 +69,7 @@ export interface JsonApiResource {
 }
 
 export interface JsonApiRelationship {
-  data: { type: string; id: string } | null;
+  data: {type: string;id: string;} | null;
 }
 
 export interface JsonApiLinks {
@@ -79,7 +79,7 @@ export interface JsonApiLinks {
   prev?: string | null;
 }
 
-// ─── Raw Attribute Interfaces ───────────────────────────────────────────────
+
 
 export interface RawVehicleAttributes {
   label: string;
@@ -118,7 +118,7 @@ export interface RawTripAttributes {
   revenue: string;
 }
 
-// ─── Pagination ─────────────────────────────────────────────────────────────
+
 
 export interface PaginatedResult<T> {
   data: T[];
@@ -126,7 +126,7 @@ export interface PaginatedResult<T> {
   nextOffset: number | null;
 }
 
-// ─── Filter State ───────────────────────────────────────────────────────────
+
 
 export interface FilterParams {
   routes: string[];

@@ -1,6 +1,6 @@
-/**
- * Empty state component for when filters return no results.
- */
+
+
+
 
 import React from 'react';
 import { Pressable, StyleSheet, Text, View, useColorScheme } from 'react-native';
@@ -22,17 +22,17 @@ export function EmptyState({ hasActiveFilters, onClearFilters }: EmptyStateProps
       </View>
       <Text style={[styles.title, { color: colors.text }]}>No Active Vehicles Found</Text>
       <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
-        {hasActiveFilters
-          ? 'No vehicles match your current filters. Try adjusting your selections.'
-          : 'There are no active vehicles at this time.'}
+        {hasActiveFilters ?
+        'No vehicles match your current filters. Try adjusting your selections.' :
+        'There are no active vehicles at this time.'}
       </Text>
-      {hasActiveFilters && onClearFilters && (
-        <Pressable style={[styles.clearButton, { borderColor: Brand.primary }]} onPress={onClearFilters}>
+      {hasActiveFilters && onClearFilters &&
+      <Pressable style={[styles.clearButton, { borderColor: Brand.primary }]} onPress={onClearFilters}>
           <Text style={[styles.clearText, { color: Brand.primary }]}>Clear All Filters</Text>
         </Pressable>
-      )}
-    </View>
-  );
+      }
+    </View>);
+
 }
 
 const styles = StyleSheet.create({
@@ -42,5 +42,5 @@ const styles = StyleSheet.create({
   title: { fontSize: FontSize.xl, fontWeight: FontWeight.bold, textAlign: 'center', marginBottom: Spacing.sm },
   subtitle: { fontSize: FontSize.md, textAlign: 'center', lineHeight: 22, marginBottom: Spacing.xl },
   clearButton: { paddingHorizontal: Spacing.xxl, paddingVertical: Spacing.md, borderRadius: Radius.full, borderWidth: 2 },
-  clearText: { fontSize: FontSize.md, fontWeight: FontWeight.semibold },
+  clearText: { fontSize: FontSize.md, fontWeight: FontWeight.semibold }
 });

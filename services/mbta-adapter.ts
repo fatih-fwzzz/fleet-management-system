@@ -1,10 +1,10 @@
-/**
- * MBTA Adapter / Transformer Layer
- *
- * Converts raw MBTA JSON:API responses into commuter-friendly data models.
- * Resolves relationship IDs to human-readable names from the `included` array.
- * Translates status codes into plain English for the rider experience.
- */
+
+
+
+
+
+
+
 
 import { mbtaClient } from './api-client';
 import type {
@@ -19,31 +19,31 @@ import type {
   RawVehicleAttributes,
   Route,
   Trip,
-  VehicleStatus,
-} from './types';
+  VehicleStatus } from
+'./types';
 
 const PAGE_SIZE = 10;
 
-// ─── Relationship Resolver ──────────────────────────────────────────────────
 
-/**
- * Finds a related resource in the `included` array by type and ID.
- */
+
+
+
+
 function resolveIncluded(
-  included: JsonApiResource[] | undefined,
-  type: string,
-  id: string | undefined
-): JsonApiResource | undefined {
+included: JsonApiResource[] | undefined,
+type: string,
+id: string | undefined)
+: JsonApiResource | undefined {
   if (!included || !id) return undefined;
   return included.find((item) => item.type === type && item.id === id);
 }
 
-// ─── Relative Time Formatter ────────────────────────────────────────────────
 
-/**
- * Converts an ISO timestamp into a human-readable relative time string.
- * e.g. "2 min ago", "just now", "1 hr ago"
- */
+
+
+
+
+
 function formatRelativeTime(isoString: string): string {
   const now = Date.now();
   const then = new Date(isoString).getTime();
@@ -65,11 +65,11 @@ function formatRelativeTime(isoString: string): string {
   return `${days}d ago`;
 }
 
-// ─── Status Translator ─────────────────────────────────────────────────────
 
-/**
- * Translates MBTA technical status codes into commuter-friendly text.
- */
+
+
+
+
 function translateStatus(status: VehicleStatus, stopName: string): string {
   switch (status) {
     case 'IN_TRANSIT_TO':
@@ -83,9 +83,9 @@ function translateStatus(status: VehicleStatus, stopName: string): string {
   }
 }
 
-/**
- * Returns a simplified status label for badge display.
- */
+
+
+
 export function getStatusLabel(status: VehicleStatus): string {
   switch (status) {
     case 'IN_TRANSIT_TO':
@@ -99,18 +99,18 @@ export function getStatusLabel(status: VehicleStatus): string {
   }
 }
 
-// ─── Vehicle Transformer ────────────────────────────────────────────────────
 
-/**
- * Transforms a raw JSON:API vehicle resource into a CommuterVehicle.
- */
+
+
+
+
 function transformVehicle(
-  raw: JsonApiResource,
-  included: JsonApiResource[] | undefined
-): CommuterVehicle {
+raw: JsonApiResource,
+included: JsonApiResource[] | undefined)
+: CommuterVehicle {
   const attrs = raw.attributes as unknown as RawVehicleAttributes;
 
-  // Resolve relationships
+
   const stopRelId = raw.relationships?.stop?.data?.id;
   const routeRelId = raw.relationships?.route?.data?.id;
   const tripRelId = raw.relationships?.trip?.data?.id;
@@ -147,27 +147,27 @@ function transformVehicle(
     directionId,
     directionLabel: directionNames[directionId] ?? 'Unknown',
     updatedAt: attrs.updated_at,
-    relativeTime: formatRelativeTime(attrs.updated_at),
+    relativeTime: formatRelativeTime(attrs.updated_at)
   };
 }
 
-// ─── API Fetch Functions ────────────────────────────────────────────────────
 
-/**
- * Fetches a paginated list of vehicles with related stops, trips, and routes.
- */
+
+
+
+
 export async function fetchVehicles(
-  offset: number = 0,
-  filters?: FilterParams
-): Promise<PaginatedResult<CommuterVehicle>> {
+offset: number = 0,
+filters?: FilterParams)
+: Promise<PaginatedResult<CommuterVehicle>> {
   const params: Record<string, string> = {
     'page[limit]': String(PAGE_SIZE),
     'page[offset]': String(offset),
     'include': 'stop,trip,route',
-    'fields[vehicle]': 'latitude,longitude,current_status,updated_at,bearing,label',
+    'fields[vehicle]': 'latitude,longitude,current_status,updated_at,bearing,label'
   };
 
-  // Apply filters
+
   if (filters?.routes && filters.routes.length > 0) {
     params['filter[route]'] = filters.routes.join(',');
   }
@@ -188,18 +188,18 @@ export async function fetchVehicles(
   return { data: vehicles, hasNextPage, nextOffset };
 }
 
-/**
- * Fetches a single vehicle by ID with full related data.
- */
+
+
+
 export async function fetchVehicleDetail(vehicleId: string): Promise<CommuterVehicle | null> {
   const params = {
     'include': 'stop,trip,route',
-    'fields[vehicle]': 'latitude,longitude,current_status,updated_at,bearing,label',
+    'fields[vehicle]': 'latitude,longitude,current_status,updated_at,bearing,label'
   };
 
   const response = await mbtaClient.get<JsonApiResponse>(`/vehicles/${vehicleId}`, { params });
 
-  // Single resource response wraps data differently
+
   const rawData = response.data as unknown as {
     data: JsonApiResource;
     included?: JsonApiResource[];
@@ -209,14 +209,14 @@ export async function fetchVehicleDetail(vehicleId: string): Promise<CommuterVeh
   return transformVehicle(rawData.data, rawData.included);
 }
 
-/**
- * Fetches all available routes from MBTA.
- */
+
+
+
 export async function fetchRoutes(): Promise<Route[]> {
   const response = await mbtaClient.get<JsonApiResponse>('/routes', {
     params: {
-      'fields[route]': 'long_name,short_name,color,text_color,description,direction_destinations,direction_names,type,sort_order',
-    },
+      'fields[route]': 'long_name,short_name,color,text_color,description,direction_destinations,direction_names,type,sort_order'
+    }
   });
 
   return response.data.data.map((raw) => {
@@ -231,14 +231,14 @@ export async function fetchRoutes(): Promise<Route[]> {
       directionDestinations: attrs.direction_destinations ?? ['', ''],
       directionNames: attrs.direction_names ?? ['Outbound', 'Inbound'],
       type: attrs.type,
-      sortOrder: attrs.sort_order ?? 0,
+      sortOrder: attrs.sort_order ?? 0
     };
   });
 }
 
-/**
- * Fetches trips filtered by route IDs.
- */
+
+
+
 export async function fetchTrips(routeIds: string[]): Promise<Trip[]> {
   if (routeIds.length === 0) return [];
 
@@ -246,8 +246,8 @@ export async function fetchTrips(routeIds: string[]): Promise<Trip[]> {
     params: {
       'filter[route]': routeIds.join(','),
       'fields[trip]': 'headsign,direction_id,name',
-      'page[limit]': '100',
-    },
+      'page[limit]': '100'
+    }
   });
 
   return response.data.data.map((raw) => {
@@ -257,7 +257,7 @@ export async function fetchTrips(routeIds: string[]): Promise<Trip[]> {
       headsign: attrs.headsign ?? 'Unknown',
       directionId: attrs.direction_id ?? 0,
       routeId: raw.relationships?.route?.data?.id ?? '',
-      name: attrs.name ?? '',
+      name: attrs.name ?? ''
     };
   });
 }

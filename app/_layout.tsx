@@ -12,8 +12,8 @@ const LightNavTheme = {
   colors: {
     ...DefaultTheme.colors,
     primary: Brand.primary,
-    background: '#F5F7FA',
-  },
+    background: '#F5F7FA'
+  }
 };
 
 const DarkNavTheme = {
@@ -21,8 +21,8 @@ const DarkNavTheme = {
   colors: {
     ...DarkTheme.colors,
     primary: '#4B8BF5',
-    background: '#0B0F1A',
-  },
+    background: '#0B0F1A'
+  }
 };
 
 const queryClient = new QueryClient({
@@ -30,9 +30,9 @@ const queryClient = new QueryClient({
     queries: {
       retry: 2,
       staleTime: 10000,
-      refetchOnWindowFocus: false,
-    },
-  },
+      refetchOnWindowFocus: false
+    }
+  }
 });
 
 export default function RootLayout() {
@@ -47,13 +47,12 @@ export default function RootLayout() {
             name="vehicle/[id]"
             options={{
               title: 'Vehicle Tracking',
-              headerBackTitle: 'Dashboard',
-              headerTintColor: Brand.primary,
-            }}
-          />
+              headerTintColor: Brand.primary
+            }} />
+
         </Stack>
         <StatusBar style="auto" />
       </ThemeProvider>
-    </QueryClientProvider>
-  );
+    </QueryClientProvider>);
+
 }

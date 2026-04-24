@@ -1,7 +1,7 @@
-/**
- * TanStack Query hook for fetching trips filtered by selected routes.
- * Only fetches when routes are selected; returns empty otherwise.
- */
+
+
+
+
 
 import { useQuery } from '@tanstack/react-query';
 import { fetchTrips } from '@/services/mbta-adapter';
@@ -12,6 +12,6 @@ export function useTrips(routeIds: string[]) {
     queryKey: ['trips', routeIds],
     queryFn: () => fetchTrips(routeIds),
     enabled: routeIds.length > 0,
-    staleTime: 2 * 60 * 1000, // 2 minutes
+    staleTime: 2 * 60 * 1000
   });
 }

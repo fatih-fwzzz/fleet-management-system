@@ -1,10 +1,10 @@
-/**
- * Error state component for commuter-friendly error messages.
- * Provides contextual guidance for common scenarios:
- * - MBTA Server Offline
- * - No Active Vehicles Found
- * - Network connectivity issues
- */
+
+
+
+
+
+
+
 
 import React from 'react';
 import {
@@ -12,8 +12,8 @@ import {
   StyleSheet,
   Text,
   View,
-  useColorScheme,
-} from 'react-native';
+  useColorScheme } from
+'react-native';
 import { Brand, Colors, FontSize, FontWeight, Radius, Spacing } from '@/constants/theme';
 
 interface ErrorStateProps {
@@ -30,16 +30,16 @@ export function ErrorState({ error, onRetry }: ErrorStateProps) {
   const isNetworkError = message.toLowerCase().includes('network') || message.toLowerCase().includes('connection');
 
   const emoji = isServerError ? '🔧' : isNetworkError ? '📡' : '⚠️';
-  const title = isServerError
-    ? 'MBTA Server Offline'
-    : isNetworkError
-      ? 'No Connection'
-      : 'Something Went Wrong';
-  const subtitle = isServerError
-    ? 'The MBTA service is temporarily unavailable. This usually resolves within a few minutes.'
-    : isNetworkError
-      ? 'Please check your internet connection and try again.'
-      : message;
+  const title = isServerError ?
+  'MBTA Server Offline' :
+  isNetworkError ?
+  'No Connection' :
+  'Something Went Wrong';
+  const subtitle = isServerError ?
+  'The MBTA service is temporarily unavailable. This usually resolves within a few minutes.' :
+  isNetworkError ?
+  'Please check your internet connection and try again.' :
+  message;
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
@@ -48,18 +48,18 @@ export function ErrorState({ error, onRetry }: ErrorStateProps) {
       </View>
       <Text style={[styles.title, { color: colors.text }]}>{title}</Text>
       <Text style={[styles.subtitle, { color: colors.textSecondary }]}>{subtitle}</Text>
-      {onRetry && (
-        <Pressable
-          style={[styles.retryButton, { backgroundColor: Brand.primary }]}
-          onPress={onRetry}
-          accessibilityRole="button"
-          accessibilityLabel="Retry loading"
-        >
+      {onRetry &&
+      <Pressable
+        style={[styles.retryButton, { backgroundColor: Brand.primary }]}
+        onPress={onRetry}
+        accessibilityRole="button"
+        accessibilityLabel="Retry loading">
+        
           <Text style={styles.retryText}>Try Again</Text>
         </Pressable>
-      )}
-    </View>
-  );
+      }
+    </View>);
+
 }
 
 const styles = StyleSheet.create({
@@ -68,7 +68,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: Spacing.xxl,
-    paddingVertical: Spacing.xxxl,
+    paddingVertical: Spacing.xxxl
   },
   iconCircle: {
     width: 80,
@@ -76,31 +76,31 @@ const styles = StyleSheet.create({
     borderRadius: 40,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: Spacing.xl,
+    marginBottom: Spacing.xl
   },
   emoji: {
-    fontSize: 36,
+    fontSize: 36
   },
   title: {
     fontSize: FontSize.xl,
     fontWeight: FontWeight.bold,
     textAlign: 'center',
-    marginBottom: Spacing.sm,
+    marginBottom: Spacing.sm
   },
   subtitle: {
     fontSize: FontSize.md,
     textAlign: 'center',
     lineHeight: 22,
-    marginBottom: Spacing.xl,
+    marginBottom: Spacing.xl
   },
   retryButton: {
     paddingHorizontal: Spacing.xxl,
     paddingVertical: Spacing.md,
-    borderRadius: Radius.full,
+    borderRadius: Radius.full
   },
   retryText: {
     color: '#FFFFFF',
     fontSize: FontSize.md,
-    fontWeight: FontWeight.semibold,
-  },
+    fontWeight: FontWeight.semibold
+  }
 });

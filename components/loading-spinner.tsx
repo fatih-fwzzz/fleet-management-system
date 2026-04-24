@@ -1,7 +1,7 @@
-/**
- * Brand-colored loading spinner component.
- * Uses #164CA1 primary color for all loading states.
- */
+
+
+
+
 
 import React from 'react';
 import { ActivityIndicator, StyleSheet, View, type ViewStyle } from 'react-native';
@@ -18,32 +18,32 @@ export function LoadingSpinner({
   size = 'large',
   color = Brand.primary,
   fullScreen = false,
-  style,
+  style
 }: LoadingSpinnerProps) {
   if (fullScreen) {
     return (
       <View style={[styles.fullScreen, style]}>
         <ActivityIndicator size={size} color={color} />
-      </View>
-    );
+      </View>);
+
   }
 
   return (
     <View style={[styles.inline, style]}>
       <ActivityIndicator size={size} color={color} />
-    </View>
-  );
+    </View>);
+
 }
 
 const styles = StyleSheet.create({
   fullScreen: {
     flex: 1,
     justifyContent: 'center',
-    alignItems: 'center',
+    alignItems: 'center'
   },
   inline: {
     paddingVertical: 24,
     alignItems: 'center',
-    justifyContent: 'center',
-  },
+    justifyContent: 'center'
+  }
 });

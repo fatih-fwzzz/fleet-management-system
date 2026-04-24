@@ -1,7 +1,7 @@
-/**
- * Vehicle Detail View — Map-centric real-time tracking screen.
- * Uses Leaflet + OpenStreetMap via WebView for cross-platform maps (no API key needed).
- */
+
+
+
+
 
 import React, { useEffect, useMemo, useRef } from 'react';
 import {
@@ -9,8 +9,8 @@ import {
   StyleSheet,
   Text,
   View,
-  useColorScheme,
-} from 'react-native';
+  useColorScheme } from
+'react-native';
 import { useLocalSearchParams } from 'expo-router';
 import { WebView } from 'react-native-webview';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -66,7 +66,7 @@ function buildLeafletHtml(lat: number, lng: number, label: string, status: strin
 }
 
 export default function VehicleDetailScreen() {
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const { id } = useLocalSearchParams<{id: string;}>();
   const colorScheme = useColorScheme() ?? 'light';
   const colors = Colors[colorScheme];
   const insets = useSafeAreaInsets();
@@ -74,7 +74,7 @@ export default function VehicleDetailScreen() {
 
   const { data: vehicle, isLoading, isFetching, error, refetch } = useVehicleDetail(id);
 
-  // Update marker position when vehicle data changes
+
   useEffect(() => {
     if (vehicle && webViewRef.current) {
       const escaped = vehicle.statusText.replace(/'/g, "\\'");
@@ -87,7 +87,7 @@ export default function VehicleDetailScreen() {
   const leafletHtml = useMemo(() => {
     if (!vehicle) return '';
     return buildLeafletHtml(vehicle.latitude, vehicle.longitude, vehicle.label, vehicle.statusText);
-  }, [vehicle?.id]); // Only rebuild HTML on initial load, updates via injectJavaScript
+  }, [vehicle?.id]);
 
   if (isLoading) {
     return <LoadingSpinner fullScreen />;
@@ -102,15 +102,15 @@ export default function VehicleDetailScreen() {
   }
 
   const statusColor =
-    vehicle.currentStatus === 'IN_TRANSIT_TO'
-      ? colors.success
-      : vehicle.currentStatus === 'INCOMING_AT'
-        ? colors.warning
-        : Brand.primary;
+  vehicle.currentStatus === 'IN_TRANSIT_TO' ?
+  colors.success :
+  vehicle.currentStatus === 'INCOMING_AT' ?
+  colors.warning :
+  Brand.primary;
 
   return (
     <View style={[styles.screen, { backgroundColor: colors.background }]}>
-      {/* Leaflet Map */}
+      {}
       <WebView
         ref={webViewRef}
         style={styles.map}
@@ -120,19 +120,19 @@ export default function VehicleDetailScreen() {
         domStorageEnabled
         scrollEnabled={false}
         showsHorizontalScrollIndicator={false}
-        showsVerticalScrollIndicator={false}
-      />
+        showsVerticalScrollIndicator={false} />
+      
 
-      {/* Fetching indicator */}
-      {isFetching && (
-        <View style={styles.fetchingBadge}>
+      {}
+      {isFetching &&
+      <View style={styles.fetchingBadge}>
           <ActivityIndicator size="small" color={Brand.primary} />
         </View>
-      )}
+      }
 
-      {/* Info Overlay Panel */}
+      {}
       <View style={[styles.infoPanel, { backgroundColor: colors.surface, paddingBottom: insets.bottom + Spacing.lg }, Shadows.lg]}>
-        {/* Vehicle Header */}
+        {}
         <View style={styles.panelHeader}>
           <View style={styles.panelTitleRow}>
             <Text style={[styles.vehicleLabel, { color: colors.text }]}>#{vehicle.label}</Text>
@@ -148,7 +148,7 @@ export default function VehicleDetailScreen() {
           </View>
         </View>
 
-        {/* Detail Rows */}
+        {}
         <View style={[styles.detailGrid, { borderTopColor: colors.border }]}>
           <DetailRow label="Route" value={vehicle.routeName} color={colors} />
           <DetailRow label="Direction" value={`${vehicle.directionLabel} · ${vehicle.tripHeadsign}`} color={colors} />
@@ -157,35 +157,35 @@ export default function VehicleDetailScreen() {
           <DetailRow label="Last Updated" value={vehicle.relativeTime} color={colors} highlight />
         </View>
       </View>
-    </View>
-  );
+    </View>);
+
 }
 
 function DetailRow({
   label,
   value,
   color,
-  highlight,
-}: {
-  label: string;
-  value: string;
-  color: { text: string; textTertiary: string; [key: string]: string };
-  highlight?: boolean;
-}) {
+  highlight
+
+
+
+
+
+}: {label: string;value: string;color: {text: string;textTertiary: string;[key: string]: string;};highlight?: boolean;}) {
   return (
     <View style={detailStyles.row}>
       <Text style={[detailStyles.label, { color: color.textTertiary }]}>{label}</Text>
       <Text
         style={[
-          detailStyles.value,
-          { color: highlight ? Brand.primary : color.text },
-        ]}
-        numberOfLines={2}
-      >
+        detailStyles.value,
+        { color: highlight ? Brand.primary : color.text }]
+        }
+        numberOfLines={2}>
+        
         {value}
       </Text>
-    </View>
-  );
+    </View>);
+
 }
 
 const styles = StyleSheet.create({
@@ -197,49 +197,49 @@ const styles = StyleSheet.create({
     left: Spacing.lg,
     backgroundColor: 'rgba(255,255,255,0.9)',
     borderRadius: Radius.full,
-    padding: Spacing.sm,
+    padding: Spacing.sm
   },
   infoPanel: {
     borderTopLeftRadius: Radius.xl,
     borderTopRightRadius: Radius.xl,
     paddingHorizontal: Spacing.xl,
-    paddingTop: Spacing.xl,
+    paddingTop: Spacing.xl
   },
   panelHeader: { marginBottom: Spacing.lg },
   panelTitleRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: Spacing.sm,
+    marginBottom: Spacing.sm
   },
   vehicleLabel: { fontSize: FontSize.xxl, fontWeight: FontWeight.heavy },
   routeBadge: {
     paddingHorizontal: Spacing.md,
     paddingVertical: Spacing.xs,
-    borderRadius: Radius.full,
+    borderRadius: Radius.full
   },
   routeBadgeText: { fontSize: FontSize.md, fontWeight: FontWeight.bold },
   statusRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm },
   statusDot: { width: 10, height: 10, borderRadius: 5 },
   statusText: { fontSize: FontSize.lg, fontWeight: FontWeight.semibold },
-  detailGrid: { borderTopWidth: 1, paddingTop: Spacing.lg, gap: Spacing.md },
+  detailGrid: { borderTopWidth: 1, paddingTop: Spacing.lg, gap: Spacing.md }
 });
 
 const detailStyles = StyleSheet.create({
   row: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'flex-start',
+    alignItems: 'flex-start'
   },
   label: {
     fontSize: FontSize.sm,
     fontWeight: FontWeight.medium,
-    width: 100,
+    width: 100
   },
   value: {
     fontSize: FontSize.sm,
     fontWeight: FontWeight.semibold,
     flex: 1,
-    textAlign: 'right',
-  },
+    textAlign: 'right'
+  }
 });

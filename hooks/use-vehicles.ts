@@ -1,13 +1,13 @@
-/**
- * TanStack Query hook for fetching paginated vehicles.
- * Integrates with Zustand filter store for route/trip/direction filtering.
- * Supports infinite scrolling with automatic background sync.
- */
 
-import { useInfiniteQuery } from '@tanstack/react-query';
+
+
+
+
+
 import { fetchVehicles } from '@/services/mbta-adapter';
-import { useFilterStore } from '@/stores/filter-store';
 import type { CommuterVehicle, PaginatedResult } from '@/services/types';
+import { useFilterStore } from '@/stores/filter-store';
+import { useInfiniteQuery } from '@tanstack/react-query';
 
 export function useVehicles() {
   const selectedRoutes = useFilterStore((s) => s.selectedRoutes);
@@ -17,25 +17,25 @@ export function useVehicles() {
   return useInfiniteQuery<PaginatedResult<CommuterVehicle>>({
     queryKey: ['vehicles', { routes: selectedRoutes, trips: selectedTrips, directionId }],
     queryFn: ({ pageParam = 0 }) =>
-      fetchVehicles(pageParam as number, {
-        routes: selectedRoutes,
-        trips: selectedTrips,
-        directionId,
-      }),
+    fetchVehicles(pageParam as number, {
+      routes: selectedRoutes,
+      trips: selectedTrips,
+      directionId
+    }),
     initialPageParam: 0,
     getNextPageParam: (lastPage) => lastPage.nextOffset,
-    refetchInterval: 15000, // Auto-refresh every 15s for live updates
+    refetchInterval: 15000,
     refetchIntervalInBackground: false,
-    staleTime: 10000,
+    staleTime: 10000
   });
 }
 
-/**
- * Helper to flatten paginated results into a single array.
- */
+
+
+
 export function flattenVehiclePages(
-  pages: PaginatedResult<CommuterVehicle>[] | undefined
-): CommuterVehicle[] {
+pages: PaginatedResult<CommuterVehicle>[] | undefined)
+: CommuterVehicle[] {
   if (!pages) return [];
   return pages.flatMap((page) => page.data);
 }

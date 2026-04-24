@@ -1,7 +1,7 @@
-/**
- * Skeleton placeholder for vehicle cards during initial loading.
- * Animated shimmer effect using react-native-reanimated.
- */
+
+
+
+
 
 import React, { useEffect } from 'react';
 import { StyleSheet, View, useColorScheme } from 'react-native';
@@ -10,11 +10,11 @@ import Animated, {
   useAnimatedStyle,
   withRepeat,
   withTiming,
-  Easing,
-} from 'react-native-reanimated';
+  Easing } from
+'react-native-reanimated';
 import { Colors, Radius, Spacing, Shadows } from '@/constants/theme';
 
-function ShimmerBlock({ width, height, style }: { width: number | string; height: number; style?: object }) {
+function ShimmerBlock({ width, height, style }: {width: number | string;height: number;style?: object;}) {
   const colorScheme = useColorScheme() ?? 'light';
   const colors = Colors[colorScheme];
   const opacity = useSharedValue(0.4);
@@ -28,23 +28,23 @@ function ShimmerBlock({ width, height, style }: { width: number | string; height
   }, [opacity]);
 
   const animatedStyle = useAnimatedStyle(() => ({
-    opacity: opacity.value,
+    opacity: opacity.value
   }));
 
   return (
     <Animated.View
       style={[
-        {
-          width: width as number,
-          height,
-          backgroundColor: colors.skeleton,
-          borderRadius: Radius.xs,
-        },
-        animatedStyle,
-        style,
-      ]}
-    />
-  );
+      {
+        width: width as number,
+        height,
+        backgroundColor: colors.skeleton,
+        borderRadius: Radius.xs
+      },
+      animatedStyle,
+      style]
+      } />);
+
+
 }
 
 export function VehicleCardSkeleton() {
@@ -53,43 +53,43 @@ export function VehicleCardSkeleton() {
 
   return (
     <View style={[styles.card, { backgroundColor: colors.surface }, Shadows.md]}>
-      {/* Route color accent bar */}
+      {}
       <View style={[styles.accentBar, { backgroundColor: colors.skeleton }]} />
 
       <View style={styles.content}>
-        {/* Top row: label + route badge */}
+        {}
         <View style={styles.topRow}>
           <ShimmerBlock width={80} height={28} />
           <ShimmerBlock width={48} height={24} style={{ borderRadius: Radius.full }} />
         </View>
 
-        {/* Status line */}
+        {}
         <ShimmerBlock width="85%" height={18} style={{ marginTop: Spacing.sm }} />
 
-        {/* Coordinates */}
+        {}
         <ShimmerBlock width="60%" height={14} style={{ marginTop: Spacing.md }} />
 
-        {/* Bottom row: direction + time */}
+        {}
         <View style={[styles.bottomRow, { marginTop: Spacing.md }]}>
           <ShimmerBlock width={100} height={14} />
           <ShimmerBlock width={64} height={22} style={{ borderRadius: Radius.full }} />
         </View>
       </View>
-    </View>
-  );
+    </View>);
+
 }
 
-/**
- * Renders multiple skeleton cards for initial loading state.
- */
-export function VehicleCardSkeletonList({ count = 5 }: { count?: number }) {
+
+
+
+export function VehicleCardSkeletonList({ count = 5 }: {count?: number;}) {
   return (
     <View style={styles.list}>
-      {Array.from({ length: count }).map((_, index) => (
-        <VehicleCardSkeleton key={`skeleton-${index}`} />
-      ))}
-    </View>
-  );
+      {Array.from({ length: count }).map((_, index) =>
+      <VehicleCardSkeleton key={`skeleton-${index}`} />
+      )}
+    </View>);
+
 }
 
 const styles = StyleSheet.create({
@@ -98,26 +98,26 @@ const styles = StyleSheet.create({
     borderRadius: Radius.lg,
     marginHorizontal: Spacing.lg,
     marginBottom: Spacing.md,
-    overflow: 'hidden',
+    overflow: 'hidden'
   },
   accentBar: {
-    width: 5,
+    width: 5
   },
   content: {
     flex: 1,
-    padding: Spacing.lg,
+    padding: Spacing.lg
   },
   topRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
+    alignItems: 'center'
   },
   bottomRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
+    alignItems: 'center'
   },
   list: {
-    paddingTop: Spacing.md,
-  },
+    paddingTop: Spacing.md
+  }
 });
